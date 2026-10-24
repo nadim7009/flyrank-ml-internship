@@ -1,0 +1,26 @@
+{
+  "split": "GroupKFold(5) by client",
+  "metric": "impressions-weighted MAE of ctr (points)",
+  "pool_pages": 12023,
+  "clients": 28,
+  "rule_mae": 0.2554,
+  "model_mae": 0.245,
+  "rule_by_fold": [
+    0.19,
+    0.3773,
+    0.1902,
+    0.2345,
+    0.2851
+  ],
+  "model_by_fold": [
+    0.1956,
+    0.3407,
+    0.1898,
+    0.2234,
+    0.2753
+  ],
+  "model_better_folds": 4,
+  "top50_overlap_rule_vs_model": 21,
+  "top50_zero_clicks_rule": 1,
+  "top50_zero_clicks_model": 1
+}

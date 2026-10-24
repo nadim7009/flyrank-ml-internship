@@ -1,0 +1,81 @@
+{
+  "pool_pages": 12023,
+  "clients": 28,
+  "queue_exported_rows": 200,
+  "actionable_pages": 3679,
+  "high_volume_pages": 414,
+  "archetype_counts": {
+    "over_performing": 5011,
+    "holding": 2919,
+    "under_clicking": 2464,
+    "visible_ignored": 1215,
+    "high_volume": 414
+  },
+  "action_counts": {
+    "protect": 5011,
+    "monitor": 2919,
+    "review_title_meta": 2464,
+    "check_indexing_and_intent": 1215,
+    "human_review_only": 414
+  },
+  "top50_raw_gap_archetype_mix": {
+    "high_volume": 49,
+    "visible_ignored": 1
+  },
+  "high_volume_gap_share_pct": 39.5,
+  "total_click_gap": 118452.0,
+  "pool_clicks_90d": 425112,
+  "top50_review_gap_share_pct": 5.4,
+  "share_declining": 0.599,
+  "staleness_table": {
+    "0-30": {
+      "pages": 7613,
+      "share_declining": 0.587
+    },
+    "31-90": {
+      "pages": 60,
+      "share_declining": 0.45
+    },
+    "91-180": {
+      "pages": 4340,
+      "share_declining": 0.62
+    },
+    "181+": {
+      "pages": 10,
+      "share_declining": 1.0
+    }
+  },
+  "largest_client_share": 0.366,
+  "triggers": [
+    {
+      "watch": "rerun this notebook",
+      "threshold": "every new 90-day window, or monthly",
+      "response": "refresh the queue; nothing is live"
+    },
+    {
+      "watch": "grouped model error rises",
+      "threshold": "weighted error above 0.294 (20% over today's 0.245)",
+      "response": "retrain, or fall back to the tier-median rule"
+    },
+    {
+      "watch": "model stops beating the rule",
+      "threshold": "model error not below rule error (0.255) on held-out clients",
+      "response": "drop the model, keep the rule plus reason codes"
+    },
+    {
+      "watch": "queue fills with dead pages",
+      "threshold": "zero-click share of the top 50 above 10% (today 1 of 50)",
+      "response": "check indexing and the pool filter"
+    },
+    {
+      "watch": "one client dominates",
+      "threshold": "largest client above 45% of the pool (today 37%)",
+      "response": "report per client, not pooled"
+    },
+    {
+      "watch": "reviewer feedback",
+      "threshold": "more than 1 in 3 top-50 pages marked 'not a real gap' by the reviewer",
+      "response": "revisit the rule and the expected-CTR model"
+    }
+  ]
+}

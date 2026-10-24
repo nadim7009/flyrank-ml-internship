@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Which pages under-capture clicks? A ranked review queue, tested on held-out clients</title>
+<meta name="description" content="A CTR opportunity score for 12,023 pages from 28 clients, checked with a client-held-out split, with a ranked action playbook and its limits.">
+<style>
+:root{--bg:#fff;--fg:#1b1f24;--mut:#59636e;--line:#d8dee4;--acc:#1f6feb;--card:#f6f8fa}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--line:#30363d;--acc:#58a6ff;--card:#161b22}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 Georgia,"Times New Roman",serif}
+main{max-width:46rem;margin:0 auto;padding:2.5rem 1rem 4rem}
+h1{font:700 1.9rem/1.25 system-ui,sans-serif;margin:0 0 .4rem}h2{font:650 1.3rem/1.3 system-ui,sans-serif;margin:2.6rem 0 .6rem;padding-top:.6rem;border-top:1px solid var(--line)}
+.by{color:var(--mut);font:.9rem system-ui,sans-serif}.abs{background:var(--card);border-left:3px solid var(--acc);padding:.9rem 1.1rem;margin:1.4rem 0;border-radius:4px}
+table{border-collapse:collapse;width:100%;margin:1rem 0;font:.92rem system-ui,sans-serif}th,td{border-bottom:1px solid var(--line);padding:.45rem .5rem;text-align:left;vertical-align:top}th{color:var(--mut);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}figure{margin:1.4rem 0}img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:4px;background:#fff}
+figcaption{font:.88rem system-ui,sans-serif;color:var(--mut);margin-top:.4rem}a{color:var(--acc)}code{font:.88em ui-monospace,monospace;background:var(--card);padding:.08em .3em;border-radius:3px}
+.stat{display:flex;gap:1rem;flex-wrap:wrap;margin:1rem 0}.stat div{flex:1 1 9rem;background:var(--card);border-radius:6px;padding:.7rem .9rem;font:.85rem system-ui,sans-serif;color:var(--mut)}.stat b{display:block;font-size:1.5rem;color:var(--fg)}
+nav{font:.85rem system-ui,sans-serif;color:var(--mut);margin:1rem 0;display:flex;flex-wrap:wrap;gap:.2rem .8rem}td code{overflow-wrap:anywhere}td,th{overflow-wrap:anywhere}
+</style></head><body><main>
+<h1>Which pages under-capture clicks? A ranked review queue, tested on held-out clients</h1>
+<p class="by">Nadim Mahmud · FlyRank ML Internship capstone · Lane 4, CTR / engagement opportunity scoring</p>
+<nav><a href="#abstract">Abstract</a><a href="#problem">Problem</a><a href="#data">Data</a><a href="#method">Method</a><a href="#results">Results</a><a href="#limits">Limitations</a><a href="#recs">Recommendations</a><a href="#repro">Reproducibility</a><a href="#credit">Credit</a></nav>
+
+<section id="abstract" class="abs"><strong>Abstract.</strong>
+Editors who review page titles and snippets need to know which pages to open first. I asked which pages that already rank on the first two result pages get fewer clicks than their position and size would suggest. I used 12,023 pages from 28 clients in one 90-day window, compared a position-tier median rule with a gradient-boosting model, and scored both on clients the model never saw. On held-out clients the model's impressions-weighted CTR error was 0.245 against 0.255 for the rule, about 4.1% lower; a random split would have shown 12.8%. The output is a ranked review queue of 3,679 pages with reason codes, plus a list of 414 very large pages that go to a person first; it supports a human reviewer and says nothing about whether an edit raises clicks.</section>
+
+<h2 id="problem">1. Introduction: the decision</h2>
+<p>An SEO editor has time to review perhaps 20 to 50 pages a week. A page that ranks well but draws few clicks has a cheap fix to try: a clearer title, a better description. Editing a title takes far less effort than rewriting an article. But a long list of "low CTR" pages is not a plan, and a wrong call has a cost. A false flag wastes review time and risks rewriting a title that was working. A missed page keeps losing clicks it already earned the ranking for.</p>
+<p>So the question is one of order: given what a page looks like today, which should a person read first, and why?</p>
+
+<h2 id="data">2. Data</h2>
+<p>The FlyRank ML Internship starter release: one anonymised table with a row per page and 90-day search and analytics measures. I kept pages with a real average position (above 0, up to 20) and at least 500 impressions, because CTR on fewer impressions moves too much on one or two clicks. That leaves <b>12,023 pages from 28 clients</b>. One client holds about 37% of them. Pages with no position data and pages under the impression floor were left out. No client names, domains, URLs or search queries are used anywhere.</p>
+
+<h2 id="method">3. Methodology</h2>
+<table>
+<tr><th>Piece</th><th>Choice</th></tr>
+<tr><td>Target</td><td>Observed <code>ctr</code> (percent), not a label made by a rule</td></tr>
+<tr><td>Baseline</td><td>Median CTR of the page's position tier</td></tr>
+<tr><td>Model</td><td>Gradient boosting, absolute-error loss, weighted by impressions. Features: position, impressions, content type, intent, word count, page age</td></tr>
+<tr><td>Validation</td><td>5 folds grouped by client, seed 42. Metric: impressions-weighted mean absolute CTR error</td></tr>
+<tr><td>Ranking score</td><td>Click gap = max(expected CTR − CTR, 0) ÷ 100 × impressions, from out-of-fold predictions</td></tr>
+</table>
+<p><b>Leakage checks.</b> CTR is clicks divided by impressions, so <code>clicks_90d</code> cannot be a feature: adding it drops the error to 0.045, which is a leak and not a good model. <code>client_id</code> is out too, since under a random split it lets the model recognise a site. The starter file's own trend fields were never used. No single clean feature predicts CTR on held-out clients much better than the baseline.</p>
+<p><b>A staleness check.</b> I also tested whether pages that go longest without an update decline more often. About 60% of pages are trending down, and that share barely moves with staleness.</p>
+<figure><img src="img/staleness_vs_decline.png" alt="Bar chart of the share of pages trending down by days since last update"><figcaption>Share of pages trending down, by days since last update (tiers with 50 or more pages). The 31-90 day tier holds only 60 pages, and the 181+ tier 10, so I do not read either one.</figcaption></figure>
+
+<h2 id="results">4. Results</h2>
+<div class="stat"><div><b>0.245</b>model error, held-out clients</div><div><b>0.255</b>tier-median rule, same split</div><div><b>4.1%</b>model lower than rule</div><div><b>4 of 5</b>folds where model is lower</div></div>
+<table>
+<tr><th>Split</th><th class="n">Rule</th><th class="n">Model</th><th class="n">Model lower by</th></tr>
+<tr><td>Random 5-fold (what an unchecked run reports)</td><td class="n">0.223</td><td class="n">0.195</td><td class="n">12.8%</td></tr>
+<tr><td>Grouped by client (what I report)</td><td class="n">0.255</td><td class="n">0.245</td><td class="n">4.1%</td></tr>
+</table>
+<figure><img src="img/before_after_split.png" alt="Bar chart comparing rule and model error under a random split and a client-grouped split"><figcaption>The same model and features under two splits. The advantage over the rule shrinks to about a third once whole clients are held out.</figcaption></figure>
+<p>Part of what the random split rewarded was recognising a client's pages from its other pages. Adding <code>client_id</code> as a feature lowered the model's random-split error further and did nothing for the rule, which is the sign of a model learning the site instead of the pattern.</p>
+<p>Fold by fold, the model is lower in 4 of 5, with one near tie, and it is slightly worse than the rule on page-1 pages. The two methods also build different queues: only 21 of the top 50 pages appear in both. With no future window to test against, I cannot say which queue is right.</p>
+<figure><img src="img/fold_errors.png" alt="Line chart of weighted CTR error per fold for the rule and the model"><figcaption>Error per fold on held-out clients. Fold 2 is hardest for both methods.</figcaption></figure>
+
+<h2 id="limits">5. Limitations and honest framing</h2>
+<ul>
+<li>Observed and directional. One 90-day window, 12,023 pages, 28 clients, one of them about 37% of the pool.</li>
+<li>There is no later window, so nothing here shows that a flagged page stays below its expected CTR, or that editing it raises clicks. The click gap is a ranking device, not a forecast of clicks to win back.</li>
+<li>No query data. A low CTR can come from branded searches, a featured snippet, an image pack or an AI answer. None of them are visible in this file.</li>
+<li>The model's edge over a lookup table is small (about 4.1%). The <code>top_3</code> tier is unreliable on this slice: its median CTR is lower than page 1's.</li>
+<li>The largest misses are very high-impression pages the model under-called. A big miss means "look at this page by hand", not "this page is bad".</li>
+<li>Nothing here makes a claim about how any search engine ranks pages.</li>
+</ul>
+
+<h2 id="recs">6. Ranked recommendations</h2>
+<p>Each page gets an archetype from a plain rule on its own numbers (not a learned cluster), a reason code a reviewer can check by eye, and an action. The editor queue ranks the 3,679 actionable pages by click gap.</p>
+<figure><img src="img/archetype_counts.png" alt="Bar chart of pages by archetype"><figcaption>Where the 12,023 pages land.</figcaption></figure>
+<table>
+<tr><th>Archetype</th><th class="n">Pages</th><th>Reason code</th><th>Action</th></tr>
+<tr><td>Visible, ignored (0 clicks in 90 days)</td><td class="n">1,215</td><td><code>zero_clicks_visible</code></td><td>Check indexing, canonical and intent first</td></tr>
+<tr><td>Under-clicking (CTR under half the expected)</td><td class="n">2,464</td><td><code>ctr_below_expected</code></td><td>Review title and description</td></tr>
+<tr><td>High-volume (over 50,000 impressions)</td><td class="n">414</td><td><code>very_high_impressions</code></td><td>Named owner reviews; no edit without sign-off</td></tr>
+<tr><td>Holding</td><td class="n">2,919</td><td>none</td><td>Monitor</td></tr>
+<tr><td>Over-performing</td><td class="n">5,011</td><td>none</td><td>Protect</td></tr>
+</table>
+<p><b>What to do first.</b> Work the editor queue from the top, 50 pages a week. Before acting, a person checks the results listing for a snippet or AI answer, whether the page ranks mostly for its brand, whether the title matches the query, and whether the page changed in the last 30 days. The top 50 title-review pages hold about 5.4% of the pool's click gap, which is a ceiling and not a promise. The 414 high-volume pages hold about 39.5% of the gap, which is why they get a person and not an edit.</p>
+<p><b>What should not be automated.</b> Rewriting titles without a human read, any change to a high-volume page without an owner's sign-off, pruning or merging a page because it appears in the queue, quoting the click gap as clicks recovered, and saying an edit caused a change in clicks. Applying the queue to a new site or window means rerunning the checks first.</p>
+<p><b>When to revisit.</b> Rerun each new 90-day window. Fall back to the tier-median rule if the grouped model error rises above 0.294 or stops beating the rule's 0.255. Check the pool filter if more than 10% of the top 50 have zero clicks. Report per client if one client passes 45% of the pool. This is a worked plan, not a production system.</p>
+
+<h2 id="repro">7. Reproducibility</h2>
+<p>Everything runs from the repo on the starter CSV with seed 42. The notebooks write the receipts in <code>work/outputs/</code> that every number above traces to.</p>
+<ul>
+<li><a href="https://github.com/nadim7009/flyrank-ml-internship">Repository</a></li>
+<li><a href="https://github.com/nadim7009/flyrank-ml-internship/blob/main/work/notebooks/w04_baseline_score.ipynb">Baseline score</a> · <a href="https://github.com/nadim7009/flyrank-ml-internship/blob/main/work/notebooks/w05_model.ipynb">Model</a> · <a href="https://github.com/nadim7009/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">Validation audit</a> · <a href="https://github.com/nadim7009/flyrank-ml-internship/blob/main/work/notebooks/w07_action_playbook.ipynb">Action playbook</a> · <a href="https://github.com/nadim7009/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">Capstone</a></li>
+</ul>
+
+<h2 id="credit">8. Acknowledgments and data credit</h2>
+<p>Built on the FlyRank ML Internship dataset, from <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>. Thanks to the FlyRank team for the data, the starter notebooks and the review of each week's work.</p>
+</main></body></html>

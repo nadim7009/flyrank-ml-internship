@@ -1,0 +1,16 @@
+{
+  "before_random_split": {
+    "rule_wmae": 0.2232,
+    "model_wmae": 0.1946
+  },
+  "after_grouped_split": {
+    "rule_wmae": 0.2554,
+    "model_wmae": 0.245
+  },
+  "random_with_client_id": {
+    "rule_wmae": 0.2232,
+    "model_wmae": 0.1861
+  },
+  "model_gain_pct_before": 12.8,
+  "model_gain_pct_after": 4.1
+}
