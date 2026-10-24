@@ -39,7 +39,7 @@ Editors who review page titles and snippets need to know which pages to open fir
 <tr><td>Ranking score</td><td>Click gap = max(expected CTR − CTR, 0) ÷ 100 × impressions, from out-of-fold predictions</td></tr>
 </table>
 <p><b>Leakage checks.</b> CTR is clicks divided by impressions, so <code>clicks_90d</code> cannot be a feature: adding it drops the error to 0.045, which is a leak and not a good model. <code>client_id</code> is out too, since under a random split it lets the model recognise a site. The starter file's own trend fields were never used. No single clean feature predicts CTR on held-out clients much better than the baseline.</p>
-<p><b>A staleness check.</b> I also tested whether pages that go longest without an update decline more often. About 60% of pages are trending down, and that share barely moves with staleness.</p>
+<p><b>A staleness check.</b> I also tested whether pages that go longest without an update decline more often. About 60% of pages in the pool are trending down. Across the whole file the share rises from 0.51 for pages updated in the last 30 days to 0.61 at 91 to 180 days, a modest rise. Inside the pool it is 0.59 against 0.62. Older pages decline a little more, which is too weak to rank on, so staleness is not in the score.</p>
 <figure><img src="img/staleness_vs_decline.png" alt="Bar chart of the share of pages trending down by days since last update"><figcaption>Share of pages trending down, by days since last update (tiers with 50 or more pages). The 31-90 day tier holds only 60 pages, and the 181+ tier 10, so I do not read either one.</figcaption></figure>
 
 <h2 id="results">4. Results</h2>

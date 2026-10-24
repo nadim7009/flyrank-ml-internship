@@ -5,6 +5,6 @@
   "top50_flag_rate": 0.82,
   "top50_zero_clicks": 1,
   "ctr_vs_position_verdict": "MIXED",
-  "staleness_verdict": "FALSE",
+  "staleness_verdict": "MIXED",
   "rule": "visible AND ctr < 0.5 * tier_median_ctr; ranked by click_gap_score"
 }

@@ -27,6 +27,12 @@
   "pool_clicks_90d": 425112,
   "top50_review_gap_share_pct": 5.4,
   "share_declining": 0.599,
+  "staleness_all_pages": {
+    "0-30": 0.511,
+    "31-90": 0.589,
+    "91-180": 0.611,
+    "181+": 0.471
+  },
   "staleness_table": {
     "0-30": {
       "pages": 7613,
